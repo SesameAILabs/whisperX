@@ -235,7 +235,13 @@ def align(
                 emissions, _ = model(waveform_segment.to(device), lengths=lengths)
             elif model_type == "huggingface":
                 if preprocess:
-                    inputs = processor(waveform_segment.squeeze(), sampling_rate=processor.sampling_rate, return_tensors="pt").to(device)
+                    sample_rate = None
+                    if 'sampling_rate' in processor.__dict__:
+                        sample_rate = processor.sampling_rate
+                    if 'feature_extractor' in processor.__dict__ and 'sampling_rate' in processor.feature_extractor.__dict__:
+                        sample_rate = processor.feature_extractor.sampling_rate
+
+                    inputs = processor(waveform_segment.squeeze(), sampling_rate=sample_rate, return_tensors="pt").to(device)
                     emissions = model(**inputs).logits
                 else:
                     emissions = model(waveform_segment.to(device)).logits
